@@ -1,0 +1,14 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html { 
+  -webkit-text-size-adjust: none;             /* prevent webkit from resizing text to fit */
+  -webkit-touch-callout: none;                /* prevent callout to copy image, etc when tap to hold */
+  /* -webkit-user-select: none;                  prevent copy paste, to allow, change 'none' to 'text' */
+  font-family: "regular", sans-serif;
+  font-size: 12px;
+  text-rendering: optimizeLegibility;
+}
