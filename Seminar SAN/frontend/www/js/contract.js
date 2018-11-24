@@ -57,8 +57,19 @@ function init() {
   cache.set("appName", "Lunch Box");
   cache.set("currency", "ETH");
   cache.set("showAddBalance", true);
-  cache.set("account", "0x123");
-  cache.set("balance", "7.5");
+
+  //Get current account from web3
+  if(web3.eth.accounts.length > 0) {
+    cache.set("account", web3.eth.defaultAccount);
+    web3.eth.getBalance(web3.eth.defaultAccount, function(err, result) {
+      cache.set("balance", web3.fromWei(result.toString()));
+    })
+  } else {
+    cache.set("account", "0x123");
+    cache.set("balance", "7.5");
+  }
+ 
+  console.log(web3);
 } 
 
 /*
