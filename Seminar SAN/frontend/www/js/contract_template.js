@@ -10,6 +10,198 @@ if (typeof web3 == "undefined") {
   console.log("web3 version", web3.version.api);
 }
 
+const deployedAddress = '0xa1078616a8b8c2dafaa9441a4c6eac7021415b71';
+
+const deployedAbi = [
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "availableMeals",
+      "outputs": [
+        {
+          "name": "Cook",
+          "type": "address"
+        },
+        {
+          "name": "Title",
+          "type": "bytes32"
+        },
+        {
+          "name": "Description",
+          "type": "string"
+        },
+        {
+          "name": "Where",
+          "type": "bytes32"
+        },
+        {
+          "name": "When",
+          "type": "uint256"
+        },
+        {
+          "name": "Price",
+          "type": "uint256"
+        },
+        {
+          "name": "Capacity",
+          "type": "uint8"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "getAvailableMeals",
+      "outputs": [
+        {
+          "name": "Meals",
+          "type": "uint256[]"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "id",
+          "type": "uint256"
+        }
+      ],
+      "name": "getMeal",
+      "outputs": [
+        {
+          "name": "Title",
+          "type": "bytes32"
+        },
+        {
+          "name": "Description",
+          "type": "string"
+        },
+        {
+          "name": "Where",
+          "type": "bytes32"
+        },
+        {
+          "name": "When",
+          "type": "uint256"
+        },
+        {
+          "name": "Price",
+          "type": "uint256"
+        },
+        {
+          "name": "Capacity",
+          "type": "uint8"
+        },
+        {
+          "name": "Reserved",
+          "type": "uint8"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "t",
+          "type": "bytes32"
+        },
+        {
+          "name": "d",
+          "type": "string"
+        },
+        {
+          "name": "wr",
+          "type": "bytes32"
+        },
+        {
+          "name": "wn",
+          "type": "uint256"
+        },
+        {
+          "name": "p",
+          "type": "uint256"
+        },
+        {
+          "name": "c",
+          "type": "uint8"
+        }
+      ],
+      "name": "createMeal",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "name": "t",
+          "type": "bytes32"
+        },
+        {
+          "name": "d",
+          "type": "string"
+        },
+        {
+          "name": "wr",
+          "type": "bytes32"
+        },
+        {
+          "name": "c",
+          "type": "uint8"
+        }
+      ],
+      "name": "updateMeal",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "id",
+          "type": "uint256"
+        }
+      ],
+      "name": "reserve",
+      "outputs": [],
+      "payable": true,
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "withdraw",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ];
+
 
 /*
  * Utility functions, which may be useful.
@@ -50,8 +242,15 @@ function init() {
   cache.set("appName", "Lunch Box");
   cache.set("currency", "ETH");
   cache.set("showAddBalance", false);
-  //cache.set("account", ...);
-  //cache.set("balance", ...);
+  if(web3.eth.accounts.length > 0) {
+    cache.set("account", web3.eth.defaultAccount);
+    web3.eth.getBalance(web3.eth.defaultAccount, function(err, result) {
+      cache.set("balance", web3.fromWei(result.toString()));
+    })
+  } else {
+    cache.set("account", "0x123");
+    cache.set("balance", "7.5");
+  }
 }
 
 /*
@@ -60,6 +259,10 @@ function init() {
  */
 
 async function getMeals() {
+  var contract = web3.eth.contract(deployedAbi);
+  var contractInstance = contract.at(deployedAddress);
+  console.log(contractInstance);
+    //console.log(contractInstance.availableMeals.getData([0,1]));
 }
 
 /*
@@ -72,6 +275,12 @@ async function getMeals() {
  */
 
 async function getMeal(id) {
+    var contract = web3.eth.contract(deployedAbi);
+    var contractInstance = contract.at(deployedAddress);
+
+    contractInstance.getMeal(id, function(err, result) {
+        console.log(result);
+    });
 }
 
 /*
@@ -90,6 +299,17 @@ async function getMeal(id) {
  */
 
 function createMeal(data) {
+  var contract = web3.eth.contract(deployedAbi);
+  var contractInstance = contract.at(deployeAddress);
+
+  //change test data with real data
+  // what should be the gas amount???
+  contractInstance.createMeal("test", "test meal", "asdf", 10, 2, 2, {
+    from: web3.eth.accounts[0],
+    gas: 1000000
+  }, function(err, result) {
+      console.log(result);
+  });
 }
 
 /*
