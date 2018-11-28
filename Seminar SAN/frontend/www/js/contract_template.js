@@ -10,7 +10,7 @@ if (typeof web3 == "undefined") {
   console.log("web3 version", web3.version.api);
 }
 
-const deployedAddress = '0xa1078616a8b8c2dafaa9441a4c6eac7021415b71';
+const deployedAddress = '0xd05d7165e493191b5ebc0e20926fda1bfc911fc2';
 
 const deployedAbi = [
     {
@@ -50,20 +50,6 @@ const deployedAbi = [
         {
           "name": "Capacity",
           "type": "uint8"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "constant": true,
-      "inputs": [],
-      "name": "getAvailableMeals",
-      "outputs": [
-        {
-          "name": "Meals",
-          "type": "uint256[]"
         }
       ],
       "payable": false,
@@ -262,7 +248,8 @@ async function getMeals() {
   var contract = web3.eth.contract(deployedAbi);
   var contractInstance = contract.at(deployedAddress);
   console.log(contractInstance);
-    //console.log(contractInstance.availableMeals.getData([0,1]));
+  getMeal(0);
+  //console.log(contractInstance.availableMeals.getData([0,1]));
 }
 
 /*
@@ -300,11 +287,10 @@ async function getMeal(id) {
 
 function createMeal(data) {
   var contract = web3.eth.contract(deployedAbi);
-  var contractInstance = contract.at(deployeAddress);
-
-  //change test data with real data
+  var contractInstance = contract.at(deployedAddress);
+  
   // what should be the gas amount???
-  contractInstance.createMeal("test", "test meal", "asdf", 10, 2, 2, {
+  contractInstance.createMeal(data.title, data.description, data.place, data.time, data.price, data.capacity, {
     from: web3.eth.accounts[0],
     gas: 1000000
   }, function(err, result) {
