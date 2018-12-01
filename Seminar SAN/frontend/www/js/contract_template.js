@@ -10,7 +10,7 @@ if (typeof web3 == "undefined") {
   console.log("web3 version", web3.version.api);
 }
 
-const deployedAddress = '0xd05d7165e493191b5ebc0e20926fda1bfc911fc2';
+const deployedAddress = '0x3e643c4edd02cf80779373602fbe620add1dbdec';//'0xd05d7165e493191b5ebc0e20926fda1bfc911fc2';
 
 const deployedAbi = [
     {
@@ -24,12 +24,8 @@ const deployedAbi = [
       "name": "availableMeals",
       "outputs": [
         {
-          "name": "Cook",
-          "type": "address"
-        },
-        {
           "name": "Title",
-          "type": "bytes32"
+          "type": "string"
         },
         {
           "name": "Description",
@@ -37,7 +33,7 @@ const deployedAbi = [
         },
         {
           "name": "Where",
-          "type": "bytes32"
+          "type": "string"
         },
         {
           "name": "When",
@@ -50,6 +46,10 @@ const deployedAbi = [
         {
           "name": "Capacity",
           "type": "uint8"
+        },
+        {
+          "name": "Cook",
+          "type": "address"
         }
       ],
       "payable": false,
@@ -68,7 +68,7 @@ const deployedAbi = [
       "outputs": [
         {
           "name": "Title",
-          "type": "bytes32"
+          "type": "string"
         },
         {
           "name": "Description",
@@ -76,7 +76,7 @@ const deployedAbi = [
         },
         {
           "name": "Where",
-          "type": "bytes32"
+          "type": "string"
         },
         {
           "name": "When",
@@ -100,11 +100,25 @@ const deployedAbi = [
       "type": "function"
     },
     {
+      "constant": true,
+      "inputs": [],
+      "name": "getNumbeOfMeals",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "constant": false,
       "inputs": [
         {
           "name": "t",
-          "type": "bytes32"
+          "type": "string"
         },
         {
           "name": "d",
@@ -112,7 +126,7 @@ const deployedAbi = [
         },
         {
           "name": "wr",
-          "type": "bytes32"
+          "type": "string"
         },
         {
           "name": "wn",
@@ -142,7 +156,7 @@ const deployedAbi = [
         },
         {
           "name": "t",
-          "type": "bytes32"
+          "type": "string"
         },
         {
           "name": "d",
@@ -150,7 +164,7 @@ const deployedAbi = [
         },
         {
           "name": "wr",
-          "type": "bytes32"
+          "type": "string"
         },
         {
           "name": "c",
@@ -248,7 +262,16 @@ async function getMeals() {
   var contract = web3.eth.contract(deployedAbi);
   var contractInstance = contract.at(deployedAddress);
   console.log(contractInstance);
-  getMeal(0);
+  contractInstance.getNumberOfMeals(function(err, result) {
+    for (i = 0; i < result.getFixed(); i++) {
+      //push every meal onto the view (do something about order?)
+      getMeal(i, function(error, result) {
+        var meal = result;
+        meal.id = i;
+        cache.set("meals", cache.get("meals").push(meal));
+      });
+    }
+  });
   //console.log(contractInstance.availableMeals.getData([0,1]));
 }
 

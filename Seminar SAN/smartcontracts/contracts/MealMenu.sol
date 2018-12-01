@@ -4,24 +4,24 @@ contract MealMenu {
 
     mapping (address => uint) pendingWithdrawals;
 
-    struct Meal {
-		address Cook;
-    	bytes32 Title; // small Title (include limit in front-end?)
+    struct Meal {		
+    	string Title; // small Title (include limit in front-end?)
 		string Description; // allowed?
-		bytes32 Where; // small location (include limit in front-end?)
+		string Where; // small location (include limit in front-end?)
 		uint When; //Unix Timestamp
 		uint Price; //in wei, needs conversion to Ether (or currency) in front-end
 		uint8 Capacity; //support <256
 
 		address[] Eaters;
+		address Cook;
     }
 
-    Meal[] public availableMeals; // use generated getter(?) for getMeals in front-end
+    Meal[] public availableMeals;
 
     function getMeal(uint id) public view returns (
-    	bytes32 Title, 
+    	string Title, 
     	string Description, 
-    	bytes32 Where, 
+    	string Where, 
     	uint When, 
     	uint Price, 
     	uint8 Capacity,
@@ -35,7 +35,11 @@ contract MealMenu {
     	Reserved = uint8(availableMeals[id].Eaters.length);
     }
 
-    function createMeal(bytes32 t, string d, bytes32 wr, uint wn, uint p, uint8 c) public {
+    function getNumberOfMeals() public view returns (uint) {
+    	return availableMeals.length;
+    }
+
+    function createMeal(string t, string d, string wr, uint wn, uint p, uint8 c) public {
     	Meal memory m;
     	m.Cook = msg.sender;
     	m.Title = t;
@@ -47,7 +51,7 @@ contract MealMenu {
     	availableMeals.push(m);
     }
 
-    function updateMeal(uint id, bytes32 t, string d, bytes32 wr, uint8 c) public {
+    function updateMeal(uint id, string t, string d, string wr, uint8 c) public {
     	require(msg.sender == availableMeals[id].Cook, "Only a the Cook of this meal can update the meal");
     	// Do not allow lowering capacity below current reservation count
     	require(uint8(availableMeals[id].Eaters.length) < c, "You cannot lower the capacity below the number of reservations"); 
