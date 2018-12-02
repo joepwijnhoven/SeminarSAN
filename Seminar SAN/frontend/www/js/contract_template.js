@@ -67,6 +67,10 @@ const deployedAbi = [
       "name": "getMeal",
       "outputs": [
         {
+          "name": "Cook",
+          "type": "address"
+        },
+        {
           "name": "Title",
           "type": "string"
         },
@@ -91,8 +95,8 @@ const deployedAbi = [
           "type": "uint8"
         },
         {
-          "name": "Reserved",
-          "type": "uint8"
+          "name": "Eaters",
+          "type": "address[]"
         }
       ],
       "payable": false,
@@ -102,7 +106,7 @@ const deployedAbi = [
     {
       "constant": true,
       "inputs": [],
-      "name": "getNumbeOfMeals",
+      "name": "getNumberOfMeals",
       "outputs": [
         {
           "name": "",
@@ -248,8 +252,8 @@ function init() {
       cache.set("balance", web3.fromWei(result.toString()));
     })
   } else {
-    cache.set("account", "0x123");
-    cache.set("balance", "7.5");
+    cache.set("account", "N/A");
+    cache.set("balance", "N/A");
   }
 }
 
@@ -262,13 +266,43 @@ async function getMeals() {
   var contract = web3.eth.contract(deployedAbi);
   var contractInstance = contract.at(deployedAddress);
   console.log(contractInstance);
+
+  // clearing cache before fetching meals; TODO probably want to do some smart caching here...
+  cache.set("meals", []);
+
   contractInstance.getNumberOfMeals(function(err, result) {
-    for (i = 0; i < result.getFixed(); i++) {
+    for (let i = 0; i < result.toNumber(); i++) {
       //push every meal onto the view (do something about order?)
-      getMeal(i, function(error, result) {
-        var meal = result;
+      contractInstance.getMeal(i, function(error, result) {
+        var mealResult = result;
+        var meal = {};
         meal.id = i;
-        cache.set("meals", cache.get("meals").push(meal));
+        meal.cook = mealResult[0];
+        meal.title = mealResult[1];
+        meal.description = mealResult[2];
+        meal.place = mealResult[3];
+        meal.time = mealResult[4].toNumber();
+        meal.price = mealResult[5].toNumber();
+        meal.capacity = mealResult[6].toNumber();
+        meal.reservations = mealResult[7];
+        // add the new meal to the meals cache, sorting the list by date 
+        // - for future meals put soon-est first
+        // - for past meals, put latest first
+        // - put future meals before past meals
+        // TODO is this ok? Maybe also sort on availability ("available capacity")
+        var mealsCache = cache.get("meals");
+        mealsCache.push(meal);
+        console.log(mealsCache);
+        cache.set("meals", mealsCache.sort(function (a, b) {
+          var now = new Date().getTime();
+          var aTime = a[4];
+          var bTime = b[4];
+          if (aTime > now && bTime > now) { // both in the future
+            return aTime - bTime; // soon-est first (smallest timestamp)
+          } else { // either both in the past, or one in future and other in past
+            return bTime - aTime; // latest first and future over past (largest timestamp)
+          }
+        }));
       });
     }
   });
@@ -289,7 +323,18 @@ async function getMeal(id) {
     var contractInstance = contract.at(deployedAddress);
 
     contractInstance.getMeal(id, function(err, result) {
-        console.log(result);
+      var mealResult = result;
+      var meal = {};
+      meal.id = id;
+      meal.cook = mealResult[0];
+      meal.title = mealResult[1];
+      meal.description = mealResult[2];
+      meal.place = mealResult[3];
+      meal.time = mealResult[4].toNumber();
+      meal.price = mealResult[5].toNumber();
+      meal.capacity = mealResult[6].toNumber();
+      meal.reservations = mealResult[7];
+      cache.set("meal", meal);
     });
 }
 
