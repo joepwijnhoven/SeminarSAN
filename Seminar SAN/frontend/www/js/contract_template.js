@@ -10,7 +10,9 @@ if (typeof web3 == "undefined") {
   console.log("web3 version", web3.version.api);
 }
 
-const deployedAddress = '0x3e643c4edd02cf80779373602fbe620add1dbdec';//'0xd05d7165e493191b5ebc0e20926fda1bfc911fc2';
+//const deployedAddress = '0x3e643c4edd02cf80779373602fbe620add1dbdec';//'0xd05d7165e493191b5ebc0e20926fda1bfc911fc2';
+const deployedAddress = '0x2c64abd59f1beca1f698d5f1228cb3ea30ed010b';
+
 
 const deployedAbi = [
     {
@@ -379,6 +381,15 @@ function createMeal(data) {
  */
 
 function changeMeal(id, data) {
+  var contract = web3.eth.contract(deployedAbi);
+  var contractInstance = contract.at(deployedAddress);
+
+  contractInstance.updateMeal(id, data.title, data.description, data.place, data.capacity, {
+    from: web3.eth.accounts[0],
+    gas: 1000000
+  }, function(err, result) {
+      console.log(result);
+  });
 }
 
 /*
