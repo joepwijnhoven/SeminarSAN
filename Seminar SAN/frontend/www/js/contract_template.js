@@ -386,4 +386,20 @@ function changeMeal(id, data) {
  */
 
 async function reserve(id) {
+  var contract = web3.eth.contract(deployedAbi);
+  var contractInstance = contract.at(deployedAddress);
+
+  // assumes meal is in cache! Can we do this?
+  var reservingMeal = cache.get("meals").find(meal => meal.id == id);
+
+  contractInstance.reserve(id, {
+    from: web3.eth.accounts[0],
+    gas: 1000000,
+    value: reservingMeal.price
+  }, function(error, result) {
+    if (error) {
+      console.err(error);
+    }
+    console.log(result);
+  });
 }
