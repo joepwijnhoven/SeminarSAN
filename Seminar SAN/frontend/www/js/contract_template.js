@@ -11,7 +11,7 @@ if (typeof web3 == "undefined") {
 }
 
 //const deployedAddress = '0x3e643c4edd02cf80779373602fbe620add1dbdec';//'0xd05d7165e493191b5ebc0e20926fda1bfc911fc2';
-const deployedAddress = '0x2c64abd59f1beca1f698d5f1228cb3ea30ed010b';
+const deployedAddress = '0x3e643c4edd02cf80779373602fbe620add1dbdec';
 
 
 const deployedAbi = [
@@ -57,6 +57,102 @@ const deployedAbi = [
       "payable": false,
       "stateMutability": "view",
       "type": "function"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "ID",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "Cook",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "Title",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "name": "Description",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "name": "Where",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "name": "When",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "Price",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "Capacity",
+          "type": "uint8"
+        }
+      ],
+      "name": "newMeal",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "ID",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "Title",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "name": "Description",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "name": "Where",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "name": "Capacity",
+          "type": "uint8"
+        }
+      ],
+      "name": "updatedMeal",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "MealID",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "Eater",
+          "type": "address"
+        }
+      ],
+      "name": "reservation",
+      "type": "event"
     },
     {
       "constant": true,
@@ -196,15 +292,6 @@ const deployedAbi = [
       "payable": true,
       "stateMutability": "payable",
       "type": "function"
-    },
-    {
-      "constant": false,
-      "inputs": [],
-      "name": "withdraw",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
     }
   ];
 
@@ -257,6 +344,20 @@ function init() {
     cache.set("account", "N/A");
     cache.set("balance", "N/A");
   }
+
+  // set up event listeners
+  /* TODO always receives last event on subscription?
+  var contract = web3.eth.contract(deployedAbi);
+  var contractInstance = contract.at(deployedAddress);
+
+  var eventListener = contractInstance.allEvents();
+  eventListener.watch(function(error, event) {
+    // just update the meals cache whenever an event arrives
+    console.log(event);
+    getMeals();
+    // TODO maybe some more fine-grained updating?
+  });
+  */
 }
 
 /*
@@ -267,7 +368,6 @@ function init() {
 async function getMeals() {
   var contract = web3.eth.contract(deployedAbi);
   var contractInstance = contract.at(deployedAddress);
-  console.log(contractInstance);
 
   // clearing cache before fetching meals; TODO probably want to do some smart caching here...
   cache.set("meals", []);
@@ -296,8 +396,8 @@ async function getMeals() {
       console.log(mealsCache);
       cache.set("meals", mealsCache.sort(function (a, b) {
         var now = new Date().getTime();
-        var aTime = a[4];
-        var bTime = b[4];
+        var aTime = a.time;
+        var bTime = b.time;
         if (aTime > now && bTime > now) { // both in the future
           return aTime - bTime; // soon-est first (smallest timestamp)
         } else { // either both in the past, or one in future and other in past
