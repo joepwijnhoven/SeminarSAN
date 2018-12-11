@@ -346,7 +346,7 @@ function init() {
   }
 
   // set up event listeners
-  /* TODO always receives last event on subscription?
+  //* TODO always receives last event on subscription?
   var contract = web3.eth.contract(deployedAbi);
   var contractInstance = contract.at(deployedAddress);
 
@@ -356,8 +356,12 @@ function init() {
     console.log(event);
     getMeals();
     // TODO maybe some more fine-grained updating?
+    // balance could also have been updated after an event, update accordingly
+    web3.eth.getBalance(web3.eth.defaultAccount, function(err, result) {
+      cache.set("balance", web3.fromWei(result.toString()));
+    });
   });
-  */
+  //*/
 }
 
 /*
@@ -373,6 +377,9 @@ async function getMeals() {
   cache.set("meals", []);
 
   contractInstance.getNumberOfMeals(async function(err, result) {
+
+    var tempMeals = [];
+
     for (let i = 0; i < result.toNumber(); i++) {
       //push every meal onto the view (do something about order?)
       var mealResult = await promisify(contractInstance.getMeal, i);
@@ -391,20 +398,21 @@ async function getMeals() {
       // - for past meals, put latest first
       // - put future meals before past meals
       // TODO is this ok? Maybe also sort on availability ("available capacity")
-      var mealsCache = cache.get("meals");
-      mealsCache.push(meal);
-      console.log(mealsCache);
-      cache.set("meals", mealsCache.sort(function (a, b) {
-        var now = new Date().getTime();
-        var aTime = a.time;
-        var bTime = b.time;
-        if (aTime > now && bTime > now) { // both in the future
-          return aTime - bTime; // soon-est first (smallest timestamp)
-        } else { // either both in the past, or one in future and other in past
-          return bTime - aTime; // latest first and future over past (largest timestamp)
-        }
-      }));
+      tempMeals.push(meal);
     }
+
+    tempMeals.sort(function (a, b) {
+      var now = new Date().getTime();
+      var aTime = a.time;
+      var bTime = b.time;
+      if (aTime > now && bTime > now) { // both in the future
+        return aTime - bTime; // soon-est first (smallest timestamp)
+      } else { // either both in the past, or one in future and other in past
+        return bTime - aTime; // latest first and future over past (largest timestamp)
+      }
+    });
+
+    cache.set("meals", tempMeals);
   });
   //console.log(contractInstance.availableMeals.getData([0,1]));
 }

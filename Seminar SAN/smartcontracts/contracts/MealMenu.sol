@@ -3,6 +3,8 @@ pragma solidity ^0.4.23;
 contract MealMenu {
 
     mapping (address => uint) pendingWithdrawals;
+    mapping (address => mapping (uint => bool)) eaterReservations;
+    mapping (address => uint) MunchieBalance; // our own sub-currency
 
     struct Meal {		
     	string Title; // small Title (include limit in front-end?)
@@ -91,11 +93,17 @@ contract MealMenu {
     function reserve(uint id) payable public {
     	require(availableMeals[id].When > now, "Cannot reserve a meal in the past");
     	require(uint8(availableMeals[id].Eaters.length) < availableMeals[id].Capacity, "The capacity of this meal has been reached");
-    	pendingWithdrawals[availableMeals[id].Cook] += msg.value;
-    	availableMeals[id].Eaters.push(msg.sender);
-    	// directly send Ether to Cook
-        availableMeals[id].Cook.transfer(availableMeals[id].Price);
-    	emit reservation(id, msg.sender);
+    	if (eaterReservations[msg.sender][id]) { // already reserved
+    		//send back the Ether
+    		msg.sender.transfer(msg.value);
+		} else {
+	    	//pendingWithdrawals[availableMeals[id].Cook] += msg.value; // not used because withdraw()
+	    	availableMeals[id].Eaters.push(msg.sender);
+	    	eaterReservations[msg.sender][id] = true;
+	    	// directly send Ether to Cook
+	        availableMeals[id].Cook.transfer(availableMeals[id].Price);
+	    	emit reservation(id, msg.sender);
+		}
     }
 
     /*
