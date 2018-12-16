@@ -11,7 +11,7 @@ if (typeof web3 == "undefined") {
 }
 
 //const deployedAddress = '0x3e643c4edd02cf80779373602fbe620add1dbdec';//'0xd05d7165e493191b5ebc0e20926fda1bfc911fc2';
-const deployedAddress = '0x3e643c4edd02cf80779373602fbe620add1dbdec';
+const deployedAddress = '0x1fbe4e8c4b5395f0ac42a27605c9de979f092c41';
 
 
 const deployedAbi = [

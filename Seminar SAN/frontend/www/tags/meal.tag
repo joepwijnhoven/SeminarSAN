@@ -45,7 +45,7 @@
     </div>
 
     <div class="form-group row">
-      <label class="col-sm-2 col-form-label">Price ({currency})</label>
+      <label class="col-sm-2 col-form-label">Price per person ({currency})</label>
       <div class="col-sm">
         <input type="text" class="form-control" ref="price" value={meal.price} disabled={id != "_"}>
       </div>
@@ -94,6 +94,26 @@
       meal.time = moment(meal.time).format("DD/MM/YYYY HH:mm");
       meal.price = web3.fromWei(meal.price, "ether");
       this.meal = meal;
+      console.log(meal)
+      if(meal.cook == web3.eth.accounts[0]) {
+          var buttons = document.getElementsByTagName("Button");
+          for(var i = 0; i < buttons.length; i++) {
+            if(buttons[i].textContent == "Join") {
+              buttons[i].disabled = true;
+            }
+          }
+      }
+
+      for(var i = 0; i < meal.reservations.length; i++) {
+        if(meal.reservations[i] == web3.eth.accounts[0]) {
+          var buttons = document.getElementsByTagName("Button");
+          for(var i = 0; i < buttons.length; i++) {
+            if(buttons[i].textContent == "Join") {
+              buttons[i].disabled = true;
+            }
+          }
+        }
+      }
     })
 
     this.cacheOn("currency", function (currency) {
