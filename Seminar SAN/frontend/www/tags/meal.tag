@@ -6,7 +6,9 @@
     <p><b>Place: </b>{meal.place}</p>
     <p><b>Number of reservations: </b>{(meal.reservations || []).length} / {meal.capacity}</p>
     <p><b>Price: </b>{meal.price} {currency}</p>
-    <p><mybutton onclick={onJoin}>Join</mybutton></p>
+    <p if={meal.code}><mybutton onclick={showCode}>Show Code</mybutton><br /><div id="qrcode"></div></p>
+    <p if={meal.code}><mybutton onclick={onCancel}>Leave</mybutton></p>
+    <p if={!meal.code}><mybutton onclick={onJoin}>Join</mybutton></p>
   </div>
   <div if={opts.edit}>
     <div class="form-group row">
@@ -93,6 +95,9 @@
     this.cacheOn(["meal"], function (meal) {
       meal.time = moment(meal.time).format("DD/MM/YYYY HH:mm");
       meal.price = web3.fromWei(meal.price, "ether");
+      if (localStorage.getItem(meal.id)) {
+        meal.code = localStorage.getItem(meal.id);
+      }
       this.meal = meal;
     })
 
@@ -103,6 +108,18 @@
     onJoin() {
       reserve(this.id);
       window.history.back();
+    }
+
+    onCancel() {
+      cancelReservation(this.id);
+      window.history.back();
+    }
+
+    showCode() {
+      if (!this.qrcode) {
+        this.qrcode = new QRCode("qrcode");
+        this.qrcode.makeCode(generateQRCodeString(this.meal.id, web3.eth.accounts[0], this.meal.code));
+      }
     }
 
     onSave() {

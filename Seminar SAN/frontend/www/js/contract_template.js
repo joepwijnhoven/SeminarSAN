@@ -10,7 +10,6 @@ if (typeof web3 == "undefined") {
   console.log("web3 version", web3.version.api);
 }
 
-//const deployedAddress = '0x3e643c4edd02cf80779373602fbe620add1dbdec';//'0xd05d7165e493191b5ebc0e20926fda1bfc911fc2';
 const deployedAddress = '0x3e643c4edd02cf80779373602fbe620add1dbdec';
 
 
@@ -47,7 +46,7 @@ const deployedAbi = [
         },
         {
           "name": "Capacity",
-          "type": "uint8"
+          "type": "uint256"
         },
         {
           "name": "Cook",
@@ -99,7 +98,7 @@ const deployedAbi = [
         {
           "indexed": false,
           "name": "Capacity",
-          "type": "uint8"
+          "type": "uint256"
         }
       ],
       "name": "newMeal",
@@ -131,7 +130,7 @@ const deployedAbi = [
         {
           "indexed": false,
           "name": "Capacity",
-          "type": "uint8"
+          "type": "uint256"
         }
       ],
       "name": "updatedMeal",
@@ -190,7 +189,7 @@ const deployedAbi = [
         },
         {
           "name": "Capacity",
-          "type": "uint8"
+          "type": "uint256"
         },
         {
           "name": "Eaters",
@@ -240,7 +239,7 @@ const deployedAbi = [
         },
         {
           "name": "c",
-          "type": "uint8"
+          "type": "uint256"
         }
       ],
       "name": "createMeal",
@@ -270,7 +269,7 @@ const deployedAbi = [
         },
         {
           "name": "c",
-          "type": "uint8"
+          "type": "uint256"
         }
       ],
       "name": "updateMeal",
@@ -285,12 +284,38 @@ const deployedAbi = [
         {
           "name": "id",
           "type": "uint256"
+        },
+        {
+          "name": "secretHash",
+          "type": "bytes32"
         }
       ],
       "name": "reserve",
       "outputs": [],
       "payable": true,
       "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "foodId",
+          "type": "uint256"
+        },
+        {
+          "name": "eater",
+          "type": "address"
+        },
+        {
+          "name": "secret",
+          "type": "string"
+        }
+      ],
+      "name": "unlockReservation",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
       "type": "function"
     }
   ];
@@ -320,6 +345,44 @@ function promisify(f, ...a) {
       resolve(result);
     }))
   })
+}
+
+function generateQRCodeString(foodId, eaterAddress, secret) {
+  return foodId.toString() + eaterAddress.substring(1) + secret;
+}
+
+function decodeQRCode(code) {
+  return {
+    id: code.split("x")[0],
+    eater: "0" + code.substr(code.indexOf("x"), 41),
+    secret: code.substr(code.indexOf("x") + 41)
+  };
+}
+
+/*
+ * WIP
+ */
+async function gasEstimation(functionName, arguments, cb) {
+  var func = functionName + "(";
+  for (type in arguments) {
+    func += type + ",";
+  }
+  func += ")";
+  func = func.replace(/,\)/gi, ")");
+  var data = web3.eth.abi.encodeFunctionSignature(func);
+
+  for (arg in arguments) {
+    data += web3.eth.abi.encodeParameter(arg, arguments[arg]).substring(2);
+  }
+
+  web3.eth.estimateGas({
+      from: web3.eth.accounts[0], 
+      data: data,
+      to: deployedAddress
+  }, function(err, estimatedGas) {
+    if (err) console.log(err);
+    cb(err, estimatedGas);
+  });
 }
 
 /*
@@ -511,13 +574,68 @@ async function reserve(id) {
   // assumes meal is in cache! Can we do this?
   var reservingMeal = cache.get("meals").find(meal => meal.id == id);
 
-  contractInstance.reserve(id, {
+  // generate client secret
+  var cryptoValues = new Uint8Array(20); // how long?
+  crypto.getRandomValues(cryptoValues); // generate crypto-secure values
+  // string-concatenate for generating crypto-secure string
+  var secret = "";
+  for (value of cryptoValues) { 
+    secret = secret + String.fromCharCode((value%92)+33); //convert numbers to characters
+  }
+
+  console.log("secret:", secret);
+  localStorage.setItem(id, secret);
+
+  // generate keccak256-hash of secret for storing on blockchain
+  var secretHash = web3.sha3(secret);
+  console.log("secretHash:", secretHash);
+
+  // TODO remove locally stored secret when Cook confirms reservation
+  // TODO QR-code display and sending GUI for confirming transfer to cook
+  // TODO GUI for withdrawing reservation
+
+  contractInstance.reserve(id, secretHash, {
     from: web3.eth.accounts[0],
     gas: 1000000,
     value: reservingMeal.price
   }, function(error, result) {
     if (error) {
-      console.err(error);
+      console.error(error);
+    }
+    console.log(result);
+  });
+}
+
+/*
+ * Cancel reservation for meal with given id.
+ */
+
+async function cancelReservation(id) {
+  var contract = web3.eth.contract(deployedAbi);
+  var contractInstance = contract.at(deployedAddress);
+
+  var secret = localStorage.getItem(id);
+
+  contractInstance.unlockReservation(id, web3.eth.accounts[0], secret, function(error, result) {
+    if (error) {
+      console.error(error);
+    }
+    localStorage.removeItem(id);
+    console.log(result);
+  });
+}
+
+/*
+ * Confirm eater and receive reservation funds
+ */
+
+async function confirmReservation(id, eater, secret) {
+  var contract = web3.eth.contract(deployedAbi);
+  var contractInstance = contract.at(deployedAddress);
+
+  contractInstance.unlockReservation(id, eater, secret, function(error, result) {
+    if (error) {
+      console.error(error);
     }
     console.log(result);
   });

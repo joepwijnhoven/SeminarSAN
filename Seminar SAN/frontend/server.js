@@ -32,6 +32,7 @@ app.use('/eat', express.static(rootDir));
 app.use('/cook', express.static(rootDir));
 app.use('/meal/:id', express.static(rootDir));
 app.use('/meal/:id/edit', express.static(rootDir));
+app.use('/scan', express.static(rootDir));
 app.use('/', express.static(rootDir));
 
 // print the error stack on error
