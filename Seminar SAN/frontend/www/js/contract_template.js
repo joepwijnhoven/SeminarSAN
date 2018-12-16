@@ -5,13 +5,12 @@
  */
 
 if (typeof web3 == "undefined") {
-  console.error("No web3 detected. Make sure to use a browser which injects web3, such as teh Brave browser.");
+  console.error("No web3 detected. Make sure to use a browser which injects web3, such as the Brave browser.");
 } else {
   console.log("web3 version", web3.version.api);
 }
 
 const deployedAddress = '0x3e643c4edd02cf80779373602fbe620add1dbdec';
-
 
 const deployedAbi = [
     {
