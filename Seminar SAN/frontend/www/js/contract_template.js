@@ -193,6 +193,10 @@ const deployedAbi = [
         {
           "name": "Eaters",
           "type": "address[]"
+        },
+        {
+          "name": "confirmedEaters",
+          "type": "address[]"
         }
       ],
       "payable": false,
@@ -346,6 +350,7 @@ function promisify(f, ...a) {
   })
 }
 
+/* only for QR codes
 function generateQRCodeString(foodId, eaterAddress, secret) {
   return foodId.toString() + eaterAddress.substring(1) + secret;
 }
@@ -356,6 +361,18 @@ function decodeQRCode(code) {
     eater: "0" + code.substr(code.indexOf("x"), 41),
     secret: code.substr(code.indexOf("x") + 41)
   };
+}*/
+
+function randomNumberToUTF16AlphaNumerical(a) {
+    if (a < 10) {
+        return a + 48;
+    } else if (a < 36) {
+        return a + 55;
+    } else if (a < 62) {
+        return a + 61;
+    } else {
+        return randomNumberToUTF16AlphaNumerical(a%62);
+    }
 }
 
 /*
@@ -455,6 +472,7 @@ async function getMeals() {
       meal.price = mealResult[5].toNumber();
       meal.capacity = mealResult[6].toNumber();
       meal.reservations = mealResult[7];
+      meal.confirmedReservations = mealResult[8];
       // add the new meal to the meals cache, sorting the list by date 
       // - for future meals put soon-est first
       // - for past meals, put latest first
@@ -504,6 +522,7 @@ async function getMeal(id) {
       meal.price = mealResult[5].toNumber();
       meal.capacity = mealResult[6].toNumber();
       meal.reservations = mealResult[7];
+      meal.confirmedReservations = mealResult[8];
       cache.set("meal", meal);
     });
 }
@@ -574,12 +593,12 @@ async function reserve(id) {
   var reservingMeal = cache.get("meals").find(meal => meal.id == id);
 
   // generate client secret
-  var cryptoValues = new Uint8Array(20); // how long?
+  var cryptoValues = new Uint8Array(10); // how long?
   crypto.getRandomValues(cryptoValues); // generate crypto-secure values
   // string-concatenate for generating crypto-secure string
   var secret = "";
   for (value of cryptoValues) { 
-    secret = secret + String.fromCharCode((value%92)+33); //convert numbers to characters
+    secret = secret + String.fromCharCode(randomNumberToUTF16AlphaNumerical(value)); //convert numbers to characters
   }
 
   console.log("secret:", secret);

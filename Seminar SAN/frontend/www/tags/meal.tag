@@ -6,7 +6,7 @@
     <p><b>Place: </b>{meal.place}</p>
     <p><b>Number of reservations: </b>{(meal.reservations || []).length} / {meal.capacity}</p>
     <p><b>Price: </b>{meal.price} {currency}</p>
-    <p if={meal.code}><mybutton onclick={showCode}>Show Code</mybutton><br /><div id="qrcode"></div></p>
+    <p if={meal.code}><b>Reservation code: </b>{meal.code}</p>
     <p if={meal.code}><mybutton onclick={onCancel}>Leave</mybutton></p>
     <p if={!meal.code}><mybutton onclick={onJoin}>Join</mybutton></p>
   </div>
@@ -59,6 +59,23 @@
         <mybutton onclick={onSave}>Save</mybutton>
       </div>
     </div>
+
+    <h1>Pending reservations</h1>
+    <ul class="list-group">
+      <li class="row">
+        <div class="col-sm">Eater address</div>
+        <div class="col-sm"></div>
+      </li>
+      <li class="form-group row" each="{eater in meal.reservations}">
+        <label class="col-sm-3 col-form-label">{eater}</label>
+        <div class="col-sm-3">
+          <input type="text" id="{eater}" class="form-control" 
+            disabled="{parent.meal.confirmedReservations.includes(eater)}" 
+            placeholder="{parent.meal.confirmedReservations.includes(eater) ? "Confirmed!" : "Reservation Code"}">
+        </div>
+        <button class="btn btn-primary" onclick={unlockReservation} disabled="{parent.meal.confirmedReservations.includes(eater)}" >Confirm Reservation</button>
+      </li>
+    </ul>
   </div>
 
   <style>
@@ -100,6 +117,7 @@
       }
       this.meal = meal;
       console.log(meal)
+      /* not necessary; removing join button when meal reservation code is present
       if(meal.cook == web3.eth.accounts[0]) {
           var buttons = document.getElementsByTagName("Button");
           for(var i = 0; i < buttons.length; i++) {
@@ -118,7 +136,7 @@
             }
           }
         }
-      }
+      }*/
     })
 
     this.cacheOn("currency", function (currency) {
@@ -135,12 +153,14 @@
       window.history.back();
     }
 
+    /* only for QR-codes
     showCode() {
       if (!this.qrcode) {
         this.qrcode = new QRCode("qrcode");
         this.qrcode.makeCode(generateQRCodeString(this.meal.id, web3.eth.accounts[0], this.meal.code));
       }
     }
+    */
 
     onSave() {
       var data = {};
@@ -157,6 +177,11 @@
       }
       
       window.history.back();
+    }
+
+    unlockReservation(e) {
+      var secret = $('#'+e.item.eater).val();
+      confirmReservation(this.id, e.item.eater, secret);
     }
   </script>
 </meal>
