@@ -6,7 +6,6 @@
         <div class="nav">
           <a class="nav-item nav-link active" href="/eat">Eat</a>
           <a class="nav-item nav-link" href="/cook">Cook</a>
-          <a class="nav-item nav-link" href="/scan">Scan</a>
         </div>
     </div>
   </div>
@@ -18,7 +17,6 @@
     <route path="/cook"><cook></cook></route>
     <route path="/meal/*"><meal></meal></route>
     <route path="/meal/*/edit"><meal edit={true}></meal></route>
-    <route path="/scan"><scan></scan></route>
   </router>
   </div>
 

@@ -53,7 +53,8 @@ contract MealMenu {
     	uint When, 
     	uint Price, 
     	uint Capacity,
-    	address[] Eaters) {
+    	address[] Eaters,
+    	address[] confirmedEaters) {
     	Cook = availableMeals[id].Cook;
     	Title = availableMeals[id].Title;
     	Description = availableMeals[id].Description;
@@ -62,6 +63,7 @@ contract MealMenu {
     	Price = availableMeals[id].Price;
     	Capacity = availableMeals[id].Capacity;
     	Eaters = availableMeals[id].Eaters;
+    	confirmedEaters = availableMeals[id].confirmedEaters;
     }
 
     function getNumberOfMeals() public view returns (uint) {
