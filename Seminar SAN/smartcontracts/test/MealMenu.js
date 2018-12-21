@@ -1,4 +1,10 @@
 var MealMenu = artifacts.require("./MealMenu.sol");
+const shouldFail = require('openzeppelin-solidity/test/helpers/shouldFail');
+
+const BigNumber = web3.BigNumber;
+require('chai')
+  .use(require('chai-bignumber')(BigNumber))
+  .should();
 
 contract('MealMenu', function(accounts) {
   it("Eater should be able to reserve for meal", function() {
@@ -20,23 +26,44 @@ contract('MealMenu', function(accounts) {
     });
   });
 
-//Deze test werkt nog niet :/
-  it("Cook should not be able to reserve for his/her own meal", function() {
+  it("Cannot reserve meal that has reached capacity", function() {
     return MealMenu.deployed().then(function(instance) {
-      return instance.createMeal("test", "description", "audi", new Date().getTime() + 2, 2, 2, {
+      return instance.createMeal("test", "description", "audi", new Date().getTime() + 2, 2, 1, {
         from: accounts[0],
         gas: 1000000
-      }).then(function(meal) {
-        console.log(1);
+      }).then(async function(meal) {
         return instance.reserve(meal.logs[0].args.ID, "secrethash", {
-          from: accounts[0],
+          from: accounts[1],
           gas: 1000000,
           value: meal.logs[0].args.Price
-        }).then(function(reservation) {
-          return instance.getMeal.call(meal.logs[0].args.ID);
-        }).catch(function (error) {
-          console.log(error);
-          assert.equal(mealResult[7].length, 0, "Cook has reserved for meal");
+        }).then(async function(rervation) {
+          await shouldFail.reverting(instance.reserve(meal.logs[0].args.ID, "secrethash", {
+            from: accounts[2],
+            gas: 1000000,
+            value: meal.logs[0].args.Price
+          }));
+        });
+      });
+    });
+  });
+
+
+  it("Cannot reserve meal twice", function() {
+    return MealMenu.deployed().then(function(instance) {
+      return instance.createMeal("test", "description", "audi", new Date().getTime() + 2, 2, 1, {
+        from: accounts[0],
+        gas: 1000000
+      }).then(async function(meal) {
+        return instance.reserve(meal.logs[0].args.ID, "secrethash", {
+          from: accounts[1],
+          gas: 1000000,
+          value: meal.logs[0].args.Price
+        }).then(async function(rervation) {
+          await shouldFail.reverting(instance.reserve(meal.logs[0].args.ID, "secrethash", {
+            from: accounts[1],
+            gas: 1000000,
+            value: meal.logs[0].args.Price
+          }));
         });
       });
     });

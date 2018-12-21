@@ -21,8 +21,6 @@ contract TestMealMenu {
     Assert.isFalse(r, "Cannot create meal in the past");
   }
 
-
-  //not allowed to create meals with zero capacity
   function testCannotCreateMealsWithZeroCapacity() public {
     MealMenu mealcontract = new MealMenu();
     ThrowProxy throwproxy = new ThrowProxy(address(mealcontract)); 
@@ -30,13 +28,6 @@ contract TestMealMenu {
     bool r = throwproxy.execute.gas(200000)(); 
     Assert.isFalse(r, "Cannot create meal with zero capacity");
   }  
-
-  //not allowed to reserver for meal that you are the cook of 
-
-  // Only cook can update meal
-
-  //
-
 }
 
 contract ThrowProxy {
