@@ -48,6 +48,10 @@ const deployedAbi = [
           "type": "uint256"
         },
         {
+          "name": "usedSecrets",
+          "type": "string"
+        },
+        {
           "name": "Cook",
           "type": "address"
         }
@@ -195,8 +199,8 @@ const deployedAbi = [
           "type": "address[]"
         },
         {
-          "name": "confirmedEaters",
-          "type": "address[]"
+          "name": "usedSecrets",
+          "type": "string"
         }
       ],
       "payable": false,
@@ -395,10 +399,7 @@ async function gasEstimation(functionName, arguments, cb) {
       from: web3.eth.accounts[0], 
       data: data,
       to: deployedAddress
-  }, function(err, estimatedGas) {
-    if (err) console.log(err);
-    cb(err, estimatedGas);
-  });
+  }, cb);
 }
 
 /*
@@ -441,6 +442,11 @@ function init() {
     });
   });
   //*/
+
+  // reload page when MetaMask account is changed
+  ethereum.on("accountsChanged", function() {
+    location.reload();
+  })
 }
 
 /*
@@ -472,7 +478,7 @@ async function getMeals() {
       meal.price = mealResult[5].toNumber();
       meal.capacity = mealResult[6].toNumber();
       meal.reservations = mealResult[7];
-      meal.confirmedReservations = mealResult[8];
+      meal.usedSecrets = mealResult[8] == "" ? [] : mealResult[8].split(",");
       // add the new meal to the meals cache, sorting the list by date 
       // - for future meals put soon-est first
       // - for past meals, put latest first
@@ -522,7 +528,7 @@ async function getMeal(id) {
       meal.price = mealResult[5].toNumber();
       meal.capacity = mealResult[6].toNumber();
       meal.reservations = mealResult[7];
-      meal.confirmedReservations = mealResult[8];
+      meal.usedSecrets = mealResult[8] == "" ? [] : mealResult[8].split(",");
       cache.set("meal", meal);
     });
 }
@@ -542,7 +548,7 @@ async function getMeal(id) {
  *     capacity (integer): number of meals to be served
  */
 
-function createMeal(data) {
+function createMeal(data, callback) {
   var contract = web3.eth.contract(deployedAbi);
   var contractInstance = contract.at(deployedAddress);
   
@@ -550,9 +556,7 @@ function createMeal(data) {
   contractInstance.createMeal(data.title, data.description, data.place, data.time, data.price, data.capacity, {
     from: web3.eth.accounts[0],
     gas: 1000000
-  }, function(err, result) {
-      console.log(result);
-  });
+  }, callback);
 }
 
 /*
@@ -569,23 +573,21 @@ function createMeal(data) {
  *     capacity (integer): number of meals to be served
  */
 
-function changeMeal(id, data) {
+function changeMeal(id, data, callback) {
   var contract = web3.eth.contract(deployedAbi);
   var contractInstance = contract.at(deployedAddress);
 
   contractInstance.updateMeal(id, data.title, data.description, data.place, data.capacity, {
     from: web3.eth.accounts[0],
     gas: 1000000
-  }, function(err, result) {
-      console.log(result);
-  });
+  }, callback);
 }
 
 /*
  * Reserve a meal with the given id.
  */
 
-async function reserve(id) {
+async function reserve(id, callback) {
   var contract = web3.eth.contract(deployedAbi);
   var contractInstance = contract.at(deployedAddress);
 
@@ -601,45 +603,43 @@ async function reserve(id) {
     secret = secret + String.fromCharCode(randomNumberToUTF16AlphaNumerical(value)); //convert numbers to characters
   }
 
+  // save secret to localStorage
   console.log("secret:", secret);
-  localStorage.setItem(id, secret);
+  if (!localStorage.getItem(id)) {
+    localStorage.setItem(id, "[]");
+  }
+  var localStorageArray = JSON.parse(localStorage.getItem(id));
+  localStorageArray.push(secret);
+  localStorage.setItem(id, JSON.stringify(localStorageArray));
 
   // generate keccak256-hash of secret for storing on blockchain
   var secretHash = web3.sha3(secret);
   console.log("secretHash:", secretHash);
 
-  // TODO remove locally stored secret when Cook confirms reservation
   // TODO QR-code display and sending GUI for confirming transfer to cook
-  // TODO GUI for withdrawing reservation
 
   contractInstance.reserve(id, secretHash, {
     from: web3.eth.accounts[0],
     gas: 1000000,
     value: reservingMeal.price
-  }, function(error, result) {
-    if (error) {
-      console.error(error);
-    }
-    console.log(result);
-  });
+  }, callback);
 }
 
 /*
  * Cancel reservation for meal with given id.
  */
 
-async function cancelReservation(id) {
+async function cancelReservation(id, secret, callback) {
   var contract = web3.eth.contract(deployedAbi);
   var contractInstance = contract.at(deployedAddress);
 
-  var secret = localStorage.getItem(id);
-
   contractInstance.unlockReservation(id, web3.eth.accounts[0], secret, function(error, result) {
-    if (error) {
-      console.error(error);
+    if (!error) {
+      var localStorageArray = JSON.parse(localStorage.getItem(id));
+      localStorageArray.splice(localStorageArray.indexOf(secret), 1);
+      localStorage.setItem(id, JSON.stringify(localStorageArray));
     }
-    localStorage.removeItem(id);
-    console.log(result);
+    callback(error, result);
   });
 }
 
@@ -647,14 +647,9 @@ async function cancelReservation(id) {
  * Confirm eater and receive reservation funds
  */
 
-async function confirmReservation(id, eater, secret) {
+async function confirmReservation(id, eater, secret, callback) {
   var contract = web3.eth.contract(deployedAbi);
   var contractInstance = contract.at(deployedAddress);
 
-  contractInstance.unlockReservation(id, eater, secret, function(error, result) {
-    if (error) {
-      console.error(error);
-    }
-    console.log(result);
-  });
+  contractInstance.unlockReservation(id, eater, secret, callback);
 }

@@ -2,12 +2,7 @@ pragma solidity ^0.4.23;
 
 contract MealMenu {
 
-    struct Reservation {
-    	bool reserved;
-    	bytes32 eaterSecretHash;
-    }
-
-    mapping (address => mapping (uint => Reservation)) eaterReservations;
+    mapping (address => mapping (uint => bytes32[])) eaterReservations;
 
     struct Meal {		
     	string Title; // small Title (include limit in front-end?)
@@ -18,7 +13,7 @@ contract MealMenu {
 		uint Capacity;
 
 		address[] Eaters;
-		address[] confirmedEaters;
+		string usedSecrets;
 		address Cook;
     }
 
@@ -54,7 +49,7 @@ contract MealMenu {
     	uint Price, 
     	uint Capacity,
     	address[] Eaters,
-    	address[] confirmedEaters) {
+    	string usedSecrets) {
     	Cook = availableMeals[id].Cook;
     	Title = availableMeals[id].Title;
     	Description = availableMeals[id].Description;
@@ -63,7 +58,7 @@ contract MealMenu {
     	Price = availableMeals[id].Price;
     	Capacity = availableMeals[id].Capacity;
     	Eaters = availableMeals[id].Eaters;
-    	confirmedEaters = availableMeals[id].confirmedEaters;
+    	usedSecrets = availableMeals[id].usedSecrets;
     }
 
     function getNumberOfMeals() public view returns (uint) {
@@ -101,7 +96,7 @@ contract MealMenu {
     function reserve(uint id, bytes32 secretHash) payable public {
     	require(availableMeals[id].When > now, "Cannot reserve a meal in the past");
     	require(availableMeals[id].Eaters.length < availableMeals[id].Capacity, "The capacity of this meal has been reached");
-    	require(!eaterReservations[msg.sender][id].reserved, "Already made reservation");
+    	//require(!eaterReservations[msg.sender][id].reserved, "Already made reservation");
     	require(availableMeals[id].Price <= msg.value, "Not enough funds sent for reservation");
 
     	if (msg.value > availableMeals[id].Price) { // caller sent to much Ether
@@ -110,35 +105,48 @@ contract MealMenu {
 
     	// process reservation
     	availableMeals[id].Eaters.push(msg.sender);
-    	eaterReservations[msg.sender][id].reserved = true;
-    	eaterReservations[msg.sender][id].eaterSecretHash = secretHash;
+    	eaterReservations[msg.sender][id].push(secretHash);
     	emit reservation(id, msg.sender);
     }
 
     function unlockReservation(uint foodId, address eater, string secret) public {
-    	require(eaterReservations[eater][foodId].reserved, "No reservation found");
+    	require(eaterReservations[eater][foodId].length > 0, "No reservation found for supplied Eater");
     	require(msg.sender == eater || msg.sender == availableMeals[foodId].Cook, "Only Eater and Cook can unlock reservation funds");
-    	require(keccak256(bytes(secret)) == eaterReservations[eater][foodId].eaterSecretHash, "Invalid secret provided");
 
-    	// remove reservation to prevent multiple-access (both Eater and Cook unlocking funds)
-    	eaterReservations[eater][foodId].reserved = false;
-    	delete eaterReservations[eater][foodId].eaterSecretHash;
-
-    	if (msg.sender == availableMeals[foodId].Cook) { 
-    		// if Cook unlocks funds, add Eater to confirmedEaters of Meal
-    		availableMeals[foodId].confirmedEaters.push(eater);
-    	}
-
-    	if (msg.sender == eater) {
-    		// if Eater unlocks funds, remove Eater from Eaters of Meal
-    		for (uint i = 0; i < availableMeals[foodId].Eaters.length; i++) {
-    			if (availableMeals[foodId].Eaters[i] == eater) {
-    				// swap in last element to remove gaps
-    				availableMeals[foodId].Eaters[i] = availableMeals[foodId].Eaters[availableMeals[foodId].Eaters.length - 1];
-    				availableMeals[foodId].Eaters.length -= 1;
-    			}
+    	// check whether one of the eaters secret hashes matches (each hash represents one reservation)
+    	bool matchFound = false;
+    	uint secretMatch;
+    	bytes32 secretHash = keccak256(bytes(secret));
+    	for (uint i = 0; i < eaterReservations[eater][foodId].length; i++) {
+    		if (secretHash == eaterReservations[eater][foodId][i]) {
+    			secretMatch = i;
+    			matchFound = true;
+    			break;
     		}
     	}
+    	require(matchFound, "Invalid secret provided");
+
+    	// remove reservation to prevent multiple-access (both Eater and Cook unlocking funds)
+    	eaterReservations[eater][foodId][secretMatch] = eaterReservations[eater][foodId][eaterReservations[eater][foodId].length - 1];
+    	eaterReservations[eater][foodId].length -= 1;
+
+    	if (msg.sender == availableMeals[foodId].Cook) { 
+    		// if Cook unlocks funds, add secret to used secrets
+    		if (bytes(availableMeals[foodId].usedSecrets).length == 0) {
+				availableMeals[foodId].usedSecrets = secret;
+			} else {
+    			availableMeals[foodId].usedSecrets = string(abi.encodePacked(availableMeals[foodId].usedSecrets, ",", secret));
+			}
+    	}
+
+		// Remove Eater from Eaters of Meal
+		for (i = 0; i < availableMeals[foodId].Eaters.length; i++) {
+			if (availableMeals[foodId].Eaters[i] == eater) {
+				// swap in last element to remove gaps
+				availableMeals[foodId].Eaters[i] = availableMeals[foodId].Eaters[availableMeals[foodId].Eaters.length - 1];
+				availableMeals[foodId].Eaters.length -= 1;
+			}
+		}
 
     	// transfer locked reservation funds to specified target
     	msg.sender.transfer(availableMeals[foodId].Price);
