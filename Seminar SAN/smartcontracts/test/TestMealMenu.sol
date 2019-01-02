@@ -13,13 +13,21 @@ contract TestMealMenu {
     Assert.equal(mealcontract.getNumberOfMeals(), amountofmeals, "There should be one meal in the blockchain");
   }
 
-  function testAmountOfMeals_something() public {
+  function testCannotCreateMealsInPast() public {
     MealMenu mealcontract = new MealMenu();
     ThrowProxy throwproxy = new ThrowProxy(address(mealcontract)); 
     MealMenu(address(throwproxy)).createMeal("test", "description", "audi", now -2, 2, 2);
     bool r = throwproxy.execute.gas(200000)(); 
-    Assert.isFalse(r, "Should be false because is should throw!");
+    Assert.isFalse(r, "Cannot create meal in the past");
   }
+
+  function testCannotCreateMealsWithZeroCapacity() public {
+    MealMenu mealcontract = new MealMenu();
+    ThrowProxy throwproxy = new ThrowProxy(address(mealcontract)); 
+    MealMenu(address(throwproxy)).createMeal("test", "description", "audi", now +2, 2, 0);
+    bool r = throwproxy.execute.gas(200000)(); 
+    Assert.isFalse(r, "Cannot create meal with zero capacity");
+  }  
 }
 
 contract ThrowProxy {
