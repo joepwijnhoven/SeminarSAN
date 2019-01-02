@@ -6,13 +6,13 @@
     <p><b>Place: </b>{meal.place}</p>
     <p><b>Number of reservations: </b>{(meal.reservations || []).length + (meal.usedSecrets || []).length} / {meal.capacity}</p>
     <p><b>Price: </b>{meal.price} {currency}</p>
-    <p if={(meal.codes || []).length > 0}><b>Reservation codes: </b>
-      <ul>
-        <li each={code in meal.codes}>
-          {code} <button class="btn btn-primary" onclick={onCancel}>Cancel reservation</button>
+    <div class="col-md-6 removepadding" if={(meal.codes || []).length > 0}><b>Reservation codes: </b>
+      <ul style="list-style: none">
+        <li class="col-md-12 removepadding" style="margin-bottom: 20px;" each={code in meal.codes}>
+          {code} <button class="btn btn-primary" style="float:right;" onclick={onCancel}>Cancel reservation</button>
         </li>
       </ul>
-    </p>
+    </div>
     <p><button class="btn btn-primary" onclick={onJoin}>{(meal.codes || []).length > 0 ? "Add reservation" : "Reserve"}</button></p>
   </div>
   <div if={opts.edit}>
