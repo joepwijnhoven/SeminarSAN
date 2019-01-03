@@ -603,15 +603,6 @@ async function reserve(id, callback) {
     secret = secret + String.fromCharCode(randomNumberToUTF16AlphaNumerical(value)); //convert numbers to characters
   }
 
-  // save secret to localStorage
-  console.log("secret:", secret);
-  if (!localStorage.getItem(id)) {
-    localStorage.setItem(id, "[]");
-  }
-  var localStorageArray = JSON.parse(localStorage.getItem(id));
-  localStorageArray.push(secret);
-  localStorage.setItem(id, JSON.stringify(localStorageArray));
-
   // generate keccak256-hash of secret for storing on blockchain
   var secretHash = web3.sha3(secret);
   console.log("secretHash:", secretHash);
@@ -622,7 +613,19 @@ async function reserve(id, callback) {
     from: web3.eth.accounts[0],
     gas: 1000000,
     value: reservingMeal.price
-  }, callback);
+  }, function (error, result) {
+    if(!error) {
+      // save secret to localStorage after reservation is completed
+      console.log("secret:", secret);
+      if (!localStorage.getItem(id)) {
+        localStorage.setItem(id, "[]");
+      }
+      var localStorageArray = JSON.parse(localStorage.getItem(id));
+      localStorageArray.push(secret);
+      localStorage.setItem(id, JSON.stringify(localStorageArray));
+    }
+    callback(error, result)
+  });
 }
 
 /*
