@@ -10,7 +10,7 @@ if (typeof web3 == "undefined") {
   console.log("web3 version", web3.version.api);
 }
 
-const deployedAddress = '0x3e643c4edd02cf80779373602fbe620add1dbdec';
+const deployedAddress = '0xc45f4fdb79b38185259c1fa1fa414e02c7ca2afe';
 
 const deployedAbi = [
     {
@@ -554,8 +554,7 @@ function createMeal(data, callback) {
   
   // what should be the gas amount???
   contractInstance.createMeal(data.title, data.description, data.place, data.time, data.price, data.capacity, {
-    from: web3.eth.accounts[0],
-    gas: 1000000
+    from: web3.eth.accounts[0]
   }, callback);
 }
 
@@ -578,8 +577,7 @@ function changeMeal(id, data, callback) {
   var contractInstance = contract.at(deployedAddress);
 
   contractInstance.updateMeal(id, data.title, data.description, data.place, data.capacity, {
-    from: web3.eth.accounts[0],
-    gas: 1000000
+    from: web3.eth.accounts[0]
   }, callback);
 }
 
@@ -620,7 +618,6 @@ async function reserve(id, callback) {
 
   contractInstance.reserve(id, secretHash, {
     from: web3.eth.accounts[0],
-    gas: 1000000,
     value: reservingMeal.price
   }, callback);
 }
