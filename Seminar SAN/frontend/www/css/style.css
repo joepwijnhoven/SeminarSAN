@@ -12,3 +12,7 @@ html {
   font-size: 12px;
   text-rendering: optimizeLegibility;
 }
+
+.removepadding {
+	padding-left: 0;
+}
