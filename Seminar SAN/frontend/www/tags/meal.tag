@@ -9,7 +9,7 @@
     <div class="col-md-6 removepadding" if={(meal.codes || []).length > 0}><b>Reservation codes: </b>
       <ul style="list-style: none">
         <li class="col-md-12 removepadding" style="margin-bottom: 20px;" each={code in meal.codes}>
-          {code} <button class="btn btn-primary" style="float:right;" onclick={onCancel}>Cancel reservation</button>
+          {code.reservationcode} <button class="btn btn-primary" style="float:right;" onclick={onCancel}>Cancel reservation</button>
         </li>
       </ul>
     </div>
@@ -120,8 +120,12 @@
       if (localStorage.getItem(meal.id)) {
         meal.codes = JSON.parse(localStorage.getItem(meal.id));
         // remove codes that are already used
-        meal.codes = meal.codes.filter(c => !meal.usedSecrets.includes(c));
+        meal.codes = meal.codes.filter(c => !meal.usedSecrets.includes(c.reservationcode));
+
         localStorage.setItem(meal.id, JSON.stringify(meal.codes));
+
+        // remove codes that are not for this user
+        meal.codes = meal.codes.filter(c => web3.eth.accounts[0] == c.user);
       } else {
         meal.codes = [];
       }
@@ -165,7 +169,7 @@
     }
 
     onCancel(e) {
-      var secret = e.item.code;
+      var secret = e.item.code.reservationcode;
       cancelReservation(this.id, secret, function(e, r) {
         if (e) {
           console.error(e);

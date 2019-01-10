@@ -10,7 +10,7 @@ if (typeof web3 == "undefined") {
   console.log("web3 version", web3.version.api);
 }
 
-const deployedAddress = '0xc45f4fdb79b38185259c1fa1fa414e02c7ca2afe';
+const deployedAddress = '0x0e2c9c1a4fc25d5342c58f8eb0e6eccef85b8c90';
 
 const deployedAbi = [
     {
@@ -590,7 +590,8 @@ async function reserve(id, callback) {
   var contractInstance = contract.at(deployedAddress);
 
   // assumes meal is in cache! Can we do this?
-  var reservingMeal = cache.get("meals").find(meal => meal.id == id);
+  var reservingMeal = cache.get("meal");
+  // var reservingMeal = cache.get("meals").find(meal => meal.id == id);
 
   // generate client secret
   var cryptoValues = new Uint8Array(10); // how long?
@@ -618,7 +619,7 @@ async function reserve(id, callback) {
         localStorage.setItem(id, "[]");
       }
       var localStorageArray = JSON.parse(localStorage.getItem(id));
-      localStorageArray.push(secret);
+      localStorageArray.push({user: web3.eth.accounts[0], reservationcode: secret});
       localStorage.setItem(id, JSON.stringify(localStorageArray));
     }
     callback(error, result)
@@ -636,7 +637,11 @@ async function cancelReservation(id, secret, callback) {
   contractInstance.unlockReservation(id, web3.eth.accounts[0], secret, function(error, result) {
     if (!error) {
       var localStorageArray = JSON.parse(localStorage.getItem(id));
-      localStorageArray.splice(localStorageArray.indexOf(secret), 1);
+      for(i = 0; i < localStorageArray.length; i++) {
+        if(localStorageArray[i].secret == secret){
+          localStorageArray.splice(i, 1);
+        }
+      }
       localStorage.setItem(id, JSON.stringify(localStorageArray));
     }
     callback(error, result);
