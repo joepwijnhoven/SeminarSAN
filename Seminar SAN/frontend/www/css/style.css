@@ -16,3 +16,19 @@ html {
 .removepadding {
 	padding-left: 0;
 }
+
+dialog {
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+  max-width: 40em;
+}
+
+#dialogcontentcontainer {
+  display: flex;
+}
+
+#dialogicon {
+  margin-right: 0.5em;
+  font-size: 2em;
+}

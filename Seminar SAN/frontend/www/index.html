@@ -7,7 +7,8 @@
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" type="text/css" href="css/glyphicons.css">    
     <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
-    <link rel="stylesheet" type="text/css" href="css/bootstrap-datetimepicker.min.css">  
+    <link rel="stylesheet" type="text/css" href="css/bootstrap-datetimepicker.min.css"> 
+    <link rel="stylesheet" type="text/css" href="css/dialog-polyfill.css"> 
     <link rel="stylesheet" type="text/css" href="css/style.css">  
 
     <title>SAN seminar app</title>
@@ -15,11 +16,16 @@
     <script src="js/jquery.js"></script>
     <script src="js/bootstrap-datetimepicker.min.js"></script>
     <script src="js/moment.min.js"></script>
+    <script src="js/dialog-polyfill.js"></script>
     <script src="js/contract_template.js"></script>
     <!--script src="js/qrcode.js"></script>
     <script src="js/instascan.js"></script-->
   </head>
   <body>
+    <dialog id="informationdialog">
+        <p id="dialogcontentcontainer"><span id="dialogicon" class="glyphicon"></span><span id="dialogtext"></span></p>
+        <button id="closedialogbutton" class="btn btn-default">close</button>
+    </dialog>
     <app></app>
     <script src="tags/app.tag" type="riot/tag"></script>
     <script src="tags/eat.tag" type="riot/tag"></script>

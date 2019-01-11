@@ -10,7 +10,7 @@ if (typeof web3 == "undefined") {
   console.log("web3 version", web3.version.api);
 }
 
-const deployedAddress = '0x0e2c9c1a4fc25d5342c58f8eb0e6eccef85b8c90';
+const deployedAddress = '0x1ccf681510d7597eef1b1ab347a37456c1c5addb';
 
 const deployedAbi = [
     {
@@ -144,7 +144,7 @@ const deployedAbi = [
       "inputs": [
         {
           "indexed": false,
-          "name": "MealID",
+          "name": "ID",
           "type": "uint256"
         },
         {
@@ -154,6 +154,33 @@ const deployedAbi = [
         }
       ],
       "name": "reservation",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "ID",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "Eater",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "Target",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "Secret",
+          "type": "string"
+        }
+      ],
+      "name": "unlock",
       "type": "event"
     },
     {
@@ -379,27 +406,48 @@ function randomNumberToUTF16AlphaNumerical(a) {
     }
 }
 
+function updateAccountInformation() {
+  cache.set("account", "...");
+  cache.set("balance", "...");
+  setTimeout(function() {
+    if(web3.eth.accounts.length > 0) {
+      cache.set("account", web3.eth.defaultAccount);
+      web3.eth.getBalance(web3.eth.defaultAccount, function(err, result) {
+        cache.set("balance", web3.fromWei(result.toString()));
+      })
+    } else {
+      cache.set("account", "N/A");
+      cache.set("balance", "N/A");
+    }
+  }, 1000);
+}
+
 /*
- * WIP
+ * dialog setup and functions
  */
-async function gasEstimation(functionName, arguments, cb) {
-  var func = functionName + "(";
-  for (type in arguments) {
-    func += type + ",";
-  }
-  func += ")";
-  func = func.replace(/,\)/gi, ")");
-  var data = web3.eth.abi.encodeFunctionSignature(func);
 
-  for (arg in arguments) {
-    data += web3.eth.abi.encodeParameter(arg, arguments[arg]).substring(2);
-  }
+$(function () {
+  $("#closedialogbutton").on("click", function() {
+    $("#informationdialog").get(0).close();
+  });
+});
 
-  web3.eth.estimateGas({
-      from: web3.eth.accounts[0], 
-      data: data,
-      to: deployedAddress
-  }, cb);
+function showInformationDialog(information) {
+  $("#dialogicon").addClass("glyphicon-ok-sign");
+  $("#dialogicon").removeClass("glyphicon-alert");
+  $("#closedialogbutton").addClass("btn-success");
+  $("#closedialogbutton").removeClass("btn-danger");
+  $("#dialogtext").text(information);
+  $("#informationdialog").get(0).showModal();
+}
+
+function showErrorDialog(error) {
+  $("#dialogicon").removeClass("glyphicon-ok-sign");
+  $("#dialogicon").addClass("glyphicon-alert");
+  $("#closedialogbutton").removeClass("btn-success");
+  $("#closedialogbutton").addClass("btn-danger");
+  $("#dialogtext").text(error);
+  $("#informationdialog").get(0).showModal();
 }
 
 /*
@@ -415,15 +463,7 @@ function init() {
   cache.set("appName", "Lunch Box");
   cache.set("currency", "ETH");
   cache.set("showAddBalance", false);
-  if(web3.eth.accounts.length > 0) {
-    cache.set("account", web3.eth.defaultAccount);
-    web3.eth.getBalance(web3.eth.defaultAccount, function(err, result) {
-      cache.set("balance", web3.fromWei(result.toString()));
-    })
-  } else {
-    cache.set("account", "N/A");
-    cache.set("balance", "N/A");
-  }
+  updateAccountInformation();
 
   // set up event listeners
   //* TODO always receives last event on subscription?
@@ -435,17 +475,19 @@ function init() {
     // just update the meals cache whenever an event arrives
     console.log(event);
     getMeals();
+    // also update single meal cache whenever the event is about the current displayed meal
+    if (cache.get('meal') && cache.get('meal').id == event.args.ID.toNumber()) {
+      getMeal(event.args.ID.toNumber());
+    }
     // TODO maybe some more fine-grained updating?
     // balance could also have been updated after an event, update accordingly
-    web3.eth.getBalance(web3.eth.defaultAccount, function(err, result) {
-      cache.set("balance", web3.fromWei(result.toString()));
-    });
+    updateAccountInformation();
   });
   //*/
 
   // reload page when MetaMask account is changed
   ethereum.on("accountsChanged", function() {
-    location.reload();
+    updateAccountInformation();
   })
 }
 
@@ -638,7 +680,7 @@ async function cancelReservation(id, secret, callback) {
     if (!error) {
       var localStorageArray = JSON.parse(localStorage.getItem(id));
       for(i = 0; i < localStorageArray.length; i++) {
-        if(localStorageArray[i].secret == secret){
+        if(localStorageArray[i].reservationcode == secret){
           localStorageArray.splice(i, 1);
         }
       }

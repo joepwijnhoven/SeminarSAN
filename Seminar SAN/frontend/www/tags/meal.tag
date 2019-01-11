@@ -161,9 +161,9 @@
     onJoin() {
       reserve(this.id, function(e, r) {
         if (e) {
-          console.error(e);
+          showErrorDialog(e.message);
         } else {
-          location.reload();
+          showInformationDialog("The reservation request is received succesfully! On the meal information page you can find your reservation code. Show this code to the cook to receive your meal. Without the code, you can not receive your meal, so keep it safe!");
         }
       });
     }
@@ -172,9 +172,9 @@
       var secret = e.item.code.reservationcode;
       cancelReservation(this.id, secret, function(e, r) {
         if (e) {
-          console.error(e);
+          showErrorDialog(e.message);
         } else {
-          location.reload();
+          showInformationDialog("The cancellation request is received succesfully! It might take a while for your cancellation to be processed entirely");
         }
       });
     }
@@ -199,16 +199,18 @@
       if (this.id == "_") {
         createMeal(data, function(e, r) {
           if (e) {
-            console.error(e);
+            showErrorDialog(e.message);
           } else {
+            showInformationDialog("The meal creation request is received succesfully! It might take a while for your meal to be processed entirely");
             window.history.back();
           }
         });
       } else {
         changeMeal(this.id, data, function(e, r) {
           if (e) {
-            console.error(e);
+            showErrorDialog(e.message);
           } else {
+            showInformationDialog("The meal change request is received succesfully! It might take a while for your changes to be processed entirely");
             window.history.back();
           }
         });
@@ -219,9 +221,9 @@
       var secret = $('#'+e.item.eater).val();
       confirmReservation(this.id, e.item.eater, secret, function(e, r) {
         if (e) {
-          console.error(e);
+          showErrorDialog(e.message);
         } else {
-          location.reload();
+          showInformationDialog("The request was processed properly! It might take a while before the request is processed entirely");
         }
       });
     }

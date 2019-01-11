@@ -35,8 +35,14 @@ contract MealMenu {
     	uint Capacity);
 
     event reservation (
-    	uint MealID,
+    	uint ID,
     	address Eater);
+
+    event unlock (
+    	uint ID,
+    	address Eater,
+    	address Target,
+    	string Secret);
 
     Meal[] public availableMeals;
 
@@ -150,5 +156,7 @@ contract MealMenu {
 
     	// transfer locked reservation funds to specified target
     	msg.sender.transfer(availableMeals[foodId].Price);
+
+    	emit unlock(foodId, eater, msg.sender, secret);
     }
 }
