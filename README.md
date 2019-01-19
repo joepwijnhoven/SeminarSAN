@@ -14,7 +14,7 @@ Most implemention/changes of the frontend can be found in the contract_template.
 
 What can the application do:
 In our implemention cooks can provide a meal. Eaters can reserve a spot for this meal and when they do they get a reservation code. This reservation code is saved locally on localstorage. The eater can exchange this code for food with the cook. The cook enters this code to receive his/her payment.
-The cook can enter this code on the page where he/she can edit the meal. He/she has to enter the reservation code for every eater seperately. This could be improved by letting the cook just enter a reservation code and letting the backend check if there is an eater with that reservation code. To achieve this we would have to change the datastructure in the contract that saves the hash of the reservation codes. Therefore, we choose to not make these alterations to our current stable application.
+The cook can enter this code on the page where he/she can edit the meal. He/she has to enter the reservation code for every eater separately. This could be improved by letting the cook just enter a reservation code and letting the backend check if there is an eater with that reservation code. To achieve this we would have to change the datastructure in the contract that saves the hash of the reservation codes. Therefore, we choose to not make these alterations to our current stable application.
 We also make use of events (see smartcontract). This will automatically update the data on the webpage without refreshing the page.
 
 
