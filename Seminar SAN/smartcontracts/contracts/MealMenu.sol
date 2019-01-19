@@ -102,7 +102,6 @@ contract MealMenu {
     function reserve(uint id, bytes32 secretHash) payable public {
     	require(availableMeals[id].When > now, "Cannot reserve a meal in the past");
     	require(availableMeals[id].Eaters.length < availableMeals[id].Capacity, "The capacity of this meal has been reached");
-    	//require(!eaterReservations[msg.sender][id].reserved, "Already made reservation");
     	require(availableMeals[id].Price <= msg.value, "Not enough funds sent for reservation");
 
     	if (msg.value > availableMeals[id].Price) { // caller sent to much Ether

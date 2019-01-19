@@ -46,28 +46,6 @@ contract('MealMenu', function(accounts) {
       });
     });
   });
-
-
-  it("Cannot reserve meal twice", function() {
-    return MealMenu.deployed().then(function(instance) {
-      return instance.createMeal("test", "description", "audi", new Date().getTime() + 2, 2, 1, {
-        from: accounts[0],
-        gas: 1000000
-      }).then(async function(meal) {
-        return instance.reserve(meal.logs[0].args.ID, "secrethash", {
-          from: accounts[1],
-          gas: 1000000,
-          value: meal.logs[0].args.Price
-        }).then(async function(rervation) {
-          await shouldFail.reverting(instance.reserve(meal.logs[0].args.ID, "secrethash", {
-            from: accounts[1],
-            gas: 1000000,
-            value: meal.logs[0].args.Price
-          }));
-        });
-      });
-    });
-  });
 });
 
 

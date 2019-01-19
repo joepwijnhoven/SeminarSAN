@@ -381,19 +381,6 @@ function promisify(f, ...a) {
   })
 }
 
-/* only for QR codes
-function generateQRCodeString(foodId, eaterAddress, secret) {
-  return foodId.toString() + eaterAddress.substring(1) + secret;
-}
-
-function decodeQRCode(code) {
-  return {
-    id: code.split("x")[0],
-    eater: "0" + code.substr(code.indexOf("x"), 41),
-    secret: code.substr(code.indexOf("x") + 41)
-  };
-}*/
-
 function randomNumberToUTF16AlphaNumerical(a) {
     if (a < 10) {
         return a + 48;
@@ -466,26 +453,23 @@ function init() {
   updateAccountInformation();
 
   // set up event listeners
-  //* TODO always receives last event on subscription?
   var contract = web3.eth.contract(deployedAbi);
   var contractInstance = contract.at(deployedAddress);
 
   var eventListener = contractInstance.allEvents();
   eventListener.watch(function(error, event) {
     // just update the meals cache whenever an event arrives
-    console.log(event);
     getMeals();
     // also update single meal cache whenever the event is about the current displayed meal
     if (cache.get('meal') && cache.get('meal').id == event.args.ID.toNumber()) {
       getMeal(event.args.ID.toNumber());
     }
-    // TODO maybe some more fine-grained updating?
     // balance could also have been updated after an event, update accordingly
     updateAccountInformation();
   });
   //*/
 
-  // reload page when MetaMask account is changed
+  // update page when MetaMask account is changed
   ethereum.on("accountsChanged", function() {
     updateAccountInformation();
   })
@@ -525,7 +509,6 @@ async function getMeals() {
       // - for future meals put soon-est first
       // - for past meals, put latest first
       // - put future meals before past meals
-      // TODO is this ok? Maybe also sort on availability ("available capacity")
       tempMeals.push(meal);
     }
 
@@ -542,7 +525,6 @@ async function getMeals() {
 
     cache.set("meals", tempMeals);
   });
-  //console.log(contractInstance.availableMeals.getData([0,1]));
 }
 
 /*
@@ -633,7 +615,6 @@ async function reserve(id, callback) {
 
   // assumes meal is in cache! Can we do this?
   var reservingMeal = cache.get("meal");
-  // var reservingMeal = cache.get("meals").find(meal => meal.id == id);
 
   // generate client secret
   var cryptoValues = new Uint8Array(10); // how long?
@@ -646,9 +627,6 @@ async function reserve(id, callback) {
 
   // generate keccak256-hash of secret for storing on blockchain
   var secretHash = web3.sha3(secret);
-  console.log("secretHash:", secretHash);
-
-  // TODO QR-code display and sending GUI for confirming transfer to cook
 
   contractInstance.reserve(id, secretHash, {
     from: web3.eth.accounts[0],
@@ -656,7 +634,6 @@ async function reserve(id, callback) {
   }, function (error, result) {
     if(!error) {
       // save secret to localStorage after reservation is completed
-      console.log("secret:", secret);
       if (!localStorage.getItem(id)) {
         localStorage.setItem(id, "[]");
       }
